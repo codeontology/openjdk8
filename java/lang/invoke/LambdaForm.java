@@ -1,26 +1,26 @@
 /*
  * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package java.lang.invoke;
@@ -1034,7 +1034,7 @@ class LambdaForm {
             this.member = member;
             this.resolvedHandle = resolvedHandle;
              // The following assert is almost always correct, but will fail for corner cases, such as PrivateInvokeTest.
-             //assert(!isInvokeBasic());
+             //assert(!isInvokeBasic(member));
         }
         NamedFunction(MethodType basicInvokerType) {
             assert(basicInvokerType == basicInvokerType.basicType()) : basicInvokerType;
@@ -1045,13 +1045,13 @@ class LambdaForm {
                 // necessary to pass BigArityTest
                 this.member = Invokers.invokeBasicMethod(basicInvokerType);
             }
-            assert(isInvokeBasic());
+            assert(isInvokeBasic(member));
         }
 
-        private boolean isInvokeBasic() {
+        private static boolean isInvokeBasic(MemberName member) {
             return member != null &&
-                   member.isMethodHandleInvoke() &&
-                   "invokeBasic".equals(member.getName());
+                   member.getDeclaringClass() == MethodHandle.class &&
+                  "invokeBasic".equals(member.getName());
         }
 
         // The next 3 constructors are used to break circular dependencies on MH.invokeStatic, etc.
@@ -1191,7 +1191,7 @@ class LambdaForm {
             assert(mh.type().basicType() == MethodType.genericMethodType(arity).changeReturnType(rtype))
                     : Arrays.asList(mh, rtype, arity);
             MemberName member = mh.internalMemberName();
-            if (member != null && member.getName().equals("invokeBasic") && member.isMethodHandleInvoke()) {
+            if (isInvokeBasic(member)) {
                 assert(arity > 0);
                 assert(a[0] instanceof MethodHandle);
                 MethodHandle mh2 = (MethodHandle) a[0];
